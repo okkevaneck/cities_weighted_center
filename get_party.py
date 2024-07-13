@@ -5,6 +5,7 @@ Find the weighted center of their cities and make a party!
 
 from geopy.geocoders import Nominatim
 from functools import partial
+from time import sleep
 
 geolocator = Nominatim(user_agent="get_party")
 
@@ -31,11 +32,14 @@ def _get_city_coordinates(city_counts):
     coords = []
     
     for city_name, count in city_counts.items():
-        print("Parsing: ", city_name)
+        print(f"Look-up for '{city_name}: {count}'")
         geodata = geocode(city_name)
         
         for _ in range(count):
             coords.append((geodata.latitude, geodata.longitude))
+            
+        # Sleep to not overuse the API.
+        sleep(1)
     
     return coords
 
@@ -49,7 +53,7 @@ def _get_center_coords(coords):
 def main():
     # Parse input cities.
     city_counts = _parse_input_cities()
-    print(city_counts)
+    print(f"Parsing:\n{city_counts}\n")
     
     # Acquire the coordinates.
     coords = _get_city_coordinates(city_counts)
@@ -57,7 +61,17 @@ def main():
     # Get center.
     center = _get_center_coords(coords)
     
-    print(f"Party place: {center}\n\tWhich is: {geolocator.reverse(center)}")
+    # Get location using geopy (optional, if you want to verify the location)
+    location = geolocator.reverse(center, exactly_one=True)
+    address = location.address if location else "Location not found"
+
+    # Create Google Maps URL
+    google_maps_url = f"https://www.google.com/maps?q={center[0]},{center[1]}"    
+    
+    print(f"Party place:\
+            \n\tLatLon: {center} \
+            \n\tAddress: {address} \
+            \n\tMaps: {google_maps_url}")
 
 
 if __name__ == "__main__":
